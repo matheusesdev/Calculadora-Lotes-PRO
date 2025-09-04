@@ -1,8 +1,14 @@
+// Arquivo: calculadora-frontend/src/api/apiService.js
 import axios from 'axios';
 
+// A URL do backend agora é dinâmica
+const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+
 const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: API_URL,
 });
+
+// ... (o resto do arquivo continua igual) ...
 
 export const uploadLotesCSV = (file) => {
   const formData = new FormData();
