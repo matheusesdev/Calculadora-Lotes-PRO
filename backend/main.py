@@ -13,9 +13,14 @@ from models.schemas import CalculoPayload, ReajustePayload, Lote
 
 app = FastAPI(title="Calculadora de Lotes API")
 
+origins = [
+    "http://localhost:3000", # Para desenvolvimento local
+    "https://precificador-ashen.vercel.app", # Sua URL de produção
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
