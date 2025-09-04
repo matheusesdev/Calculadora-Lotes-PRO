@@ -1,0 +1,7 @@
+# Arquivo: backend/requirements.txt
+
+fastapi
+uvicorn[standard]
+pandas
+pydantic
+python-multipart

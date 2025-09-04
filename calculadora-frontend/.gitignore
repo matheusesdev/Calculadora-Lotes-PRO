@@ -1,0 +1,23 @@
+# Arquivo .gitignore Otimizado
+
+# Dependências do Backend Python
+backend/venv/
+backend/__pycache__/
+
+# Dependências do Frontend Node.js
+calculadora-frontend/node_modules/
+calculadora-frontend/build/
+
+# Arquivos de Ambiente (Senhas e Chaves) - MUITO IMPORTANTE
+.env
+.env.*
+!/.env.example
+
+# Arquivos de Log e Sistema
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+
+# Arquivos de IDE
+.vscode/
