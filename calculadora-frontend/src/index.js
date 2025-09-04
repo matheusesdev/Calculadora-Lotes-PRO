@@ -1,4 +1,3 @@
-// Arquivo: calculadora-frontend/src/index.js (VERSÃO CORRETA E LIMPA)
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ThemeProvider } from '@mui/material/styles';

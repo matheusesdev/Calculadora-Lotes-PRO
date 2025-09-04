@@ -1,3 +1,4 @@
+// Arquivo: calculadora-frontend/src/components/LoteTable.js (VERSÃO CORRETA COM MUI DATAGRID)
 import React from 'react';
 import { Box } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -10,6 +11,7 @@ const LoteTable = ({ lotes, formatarMoeda, selectionModel, setSelectionModel }) 
     { field: 'VALOR_A_VISTA', headerName: 'Valor à Vista', type: 'number', flex: 1, minWidth: 150, valueFormatter: (value) => formatarMoeda(value) },
     { field: 'ENTRADA', headerName: 'Entrada', type: 'number', flex: 1, minWidth: 150, valueFormatter: (value) => formatarMoeda(value) },
   ];
+
   return (
     <Box sx={{ height: 600, width: '100%' }}>
       <DataGrid

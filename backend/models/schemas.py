@@ -1,11 +1,14 @@
-# Arquivo: backend/models/schemas.py (VERSÃO FINAL E COMPLETA)
+# Arquivo: backend/models/schemas.py (VERSÃO COM ETAPA OPCIONAL)
 
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional # 1. Importar Optional
 
 # Define a estrutura de um único lote
 class Lote(BaseModel):
-    ETAPA: str
+    # --- ALTERAÇÃO AQUI ---
+    ETAPA: Optional[str] = None # 2. Marcar como opcional e com valor padrão None
+    # --- FIM DA ALTERAÇÃO ---
+    
     BLOCO: str
     UNIDADE: str
     VALOR_A_VISTA: float
@@ -17,7 +20,6 @@ class CalculoPayload(BaseModel):
     prazo_anos: int
     taxa_juros_anual: float
 
-# --- A CLASSE QUE ESTAVA FALTANDO ---
 # Define a estrutura dos dados para a rota de REAJUSTE
 class ReajustePayload(BaseModel):
     lotes: List[Lote]
