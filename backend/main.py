@@ -1,21 +1,28 @@
-# Arquivo: backend/main.py (VERSÃO FINAL COMPLETA)
+# Arquivo: backend/main.py (VERSÃO FINAL COM MERGE CORRIGIDO)
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import pandas as pd
 from io import StringIO, BytesIO
+import json
 from typing import List
 from pydantic import BaseModel
 
-from core.calculator import carregar_dados_csv, calcular_mensais, reajustar_valores, formatar_dataframe_para_csv
-from models.schemas import CalculoPayload, ReajustePayload, Lote
+from core.calculator import (
+    carregar_dados_csv, 
+    calcular_mensais, 
+    reajustar_valores, 
+    formatar_dataframe_para_csv, 
+    merge_entradas_df
+)
+from models.schemas import CalculoPayload, ReajustePayload
 
 app = FastAPI(title="Calculadora de Lotes API")
 
 origins = [
-    "http://localhost:3000", # Para desenvolvimento local
-    "https://precificador-ashen.vercel.app", # Sua URL de produção
+    "http://localhost:3000",
+    "https://precificador-ashen.vercel.app",
 ]
 
 app.add_middleware(
@@ -76,3 +83,25 @@ async def handle_download(payload: CalculoPayload):
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao gerar o CSV: {str(e)}")
+        
+# --- ROTA DE MERGE CORRIGIDA ---
+@app.post("/api/merge_entradas")
+async def handle_merge(
+    lotes_atuais: str = Form(...),
+    file: UploadFile = File(...)
+):
+    try:
+        # Converte o JSON dos lotes atuais de volta para um DataFrame
+        lotes_list = json.loads(lotes_atuais)
+        df_principal = pd.DataFrame(lotes_list)
+
+        # Processa o novo arquivo CSV das entradas em um stream
+        contents = await file.read()
+        df_entradas_stream = StringIO(contents.decode('utf-8'))
+
+        # Chama a nossa função de merge, passando os dois DataFrames
+        df_merged = merge_entradas_df(df_principal, df_entradas_stream)
+        
+        return df_merged.to_dict(orient='records')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao combinar planilhas: {str(e)}")
