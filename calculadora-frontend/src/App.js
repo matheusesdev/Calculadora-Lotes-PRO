@@ -44,11 +44,82 @@ function App() {
   const filteredLotes = useMemo(() => { return lotes.filter(lote => { const lowerSearch = searchTerm.toLowerCase(); const atendeBusca = !searchTerm || lote.UNIDADE.toLowerCase().includes(lowerSearch) || lote.BLOCO.toLowerCase().includes(lowerSearch) || (temColunaEtapa && lote.ETAPA && lote.ETAPA.toLowerCase().includes(lowerSearch)); const atendeEtapa = !temColunaEtapa || etapaFiltro === 'Todas' || lote.ETAPA === etapaFiltro; const atendeBloco = blocoFiltro === 'Todas' || lote.BLOCO === blocoFiltro; return atendeBusca && atendeEtapa && atendeBloco; }); }, [lotes, searchTerm, etapaFiltro, blocoFiltro, temColunaEtapa]);
   const pushToHistory = (currentState) => { setHistory(prevHistory => [...prevHistory, currentState]); };
   const handleTabChange = (event, newValue) => { setCurrentTab(newValue); };
-  const handleFileUpload = async (file) => { setIsLoading(true); const loadingToast = toast.loading('Carregando arquivo...'); try { const response = await uploadLotesCSV(file); const data = response.data; setLotes(data); if (data.length > 0 && data.every(l => l.ENTRADA === 0)) { setTemColunaEntrada(false); toast.success(`Arquivo carregado! Para adicionar valores de entrada, use o painel opcional.`, { id: loadingToast, duration: 5000 }); } else { setTemColunaEntrada(true); toast.success(`Arquivo carregado! ${data.length} lotes encontrados.`, { id: loadingToast }); } setHistory([]); setError(''); } catch (err) { const errorMessage = err.response?.data?.detail || "Erro desconhecido."; setError(errorMessage); toast.error(`Erro: ${errorMessage}`, { id: loadingToast }); } finally { setIsLoading(false); } };
+  const handleFileUpload = async (file) => {
+    setIsLoading(true);
+    const loadingToast = toast.loading('Carregando arquivo...');
+    setError('');
+
+    try {
+      const response = await uploadLotesCSV(file);
+      
+      if (!response || !response.data) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
+      const data = response.data;
+      setLotes(data);
+      
+      if (data.length > 0) {
+        const semEntradas = data.every(l => !l.ENTRADA || l.ENTRADA === 0 || l.ENTRADA === "0,00" || l.ENTRADA === "R$ 0,00");
+        setTemColunaEntrada(!semEntradas);
+        
+        const mensagem = semEntradas
+          ? `Arquivo carregado! Para adicionar valores de entrada, use o painel opcional.`
+          : `Arquivo carregado! ${data.length} lotes encontrados.`;
+        
+        toast.success(mensagem, { id: loadingToast, duration: 5000 });
+      } else {
+        throw new Error('Nenhum lote encontrado no arquivo');
+      }
+
+      setHistory([]);
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || err.message || "Erro desconhecido.";
+      setError(errorMessage);
+      setLotes([]);
+      toast.error(`Erro: ${errorMessage}`, { id: loadingToast });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const handlePreviewReajuste = async () => { const lotesParaReajustar = selectionModel.length > 0 ? lotes.filter(lote => selectionModel.includes(lote.UNIDADE)) : filteredLotes; if (lotesParaReajustar.length === 0) { toast.error("Nenhum lote para reajustar."); return; } pushToHistory(lotes); setIsLoading(true); const payload = { lotes: lotesParaReajustar, coluna_alvo: colunaAlvo, operacao, tipo_reajuste: tipoReajuste, valor_reajuste: valorReajuste || 0, }; try { const response = await previewReajuste(payload); setPreviewData(response.data); setIsModalOpen(true); } catch (err) { toast.error(err.response?.data?.detail || "Erro ao gerar preview."); } finally { setIsLoading(false); } };
   const handleConfirmReajuste = () => { pushToHistory(lotes); const lotesAtualizados = lotes.map(lote => { const reajusteInfo = previewData.find(p => p.UNIDADE === lote.UNIDADE); return reajusteInfo ? { ...lote, [colunaAlvo]: reajusteInfo.NOVO_VALOR } : lote; }); setLotes(lotesAtualizados); setIsModalOpen(false); setPreviewData(null); setSelectionModel([]); toast.success('Reajuste aplicado com sucesso!'); setCurrentTab(1); };
   const handleUndo = () => { if (history.length > 0) { const lastState = history[history.length - 1]; setLotes(lastState); setHistory(prevHistory => prevHistory.slice(0, -1)); toast.success('Última alteração desfeita!'); } };
-  const handleCalcular = async () => { const lotesParaCalcular = selectionModel.length > 0 ? lotes.filter(lote => selectionModel.includes(lote.UNIDADE)) : filteredLotes; if (lotesParaCalcular.length === 0) { toast.error("Nenhum lote para calcular."); return; } setIsLoading(true); const loadingToast = toast.loading('Calculando mensais...'); const payload = { lotes: lotesParaCalcular, prazo_anos: prazoAnos, taxa_juros_anual: taxaJuros }; try { const response = await calcularSimulacao(payload); setResultadoData(response.data); toast.success('Cálculo concluído com sucesso!', { id: loadingToast }); } catch (err) { toast.error(err.response?.data?.detail || "Erro ao calcular.", { id: loadingToast }); } finally { setIsLoading(false); } };
+  const handleCalcular = async () => {
+    const lotesParaCalcular = selectionModel.length > 0 
+      ? lotes.filter(lote => selectionModel.includes(lote.UNIDADE)) 
+      : filteredLotes;
+
+    if (lotesParaCalcular.length === 0) {
+      toast.error("Nenhum lote para calcular.");
+      return;
+    }
+
+    setIsLoading(true);
+    const loadingToast = toast.loading('Calculando mensais...');
+
+    try {
+      const payload = {
+        lotes: lotesParaCalcular,
+        prazo_anos: prazoAnos,
+        taxa_juros_anual: taxaJuros
+      };
+
+      const response = await calcularSimulacao(payload);
+      if (response && response.data) {
+        setResultadoData(response.data);
+        toast.success('Cálculo concluído com sucesso!', { id: loadingToast });
+      } else {
+        throw new Error('Resposta inválida do servidor');
+      }
+    } catch (err) {
+      setResultadoData(null);
+      const errorMessage = err.response?.data?.detail || err.message || "Erro ao calcular.";
+      toast.error(errorMessage, { id: loadingToast });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const handleDownload = async () => { if (!resultadoData) { toast.error("Gere a simulação primeiro."); return; } const loadingToast = toast.loading('Gerando seu arquivo CSV...'); const lotesOriginaisNoResultado = resultadoData.map(({ ETAPA, BLOCO, UNIDADE, VALOR_A_VISTA, ENTRADA }) => ({ ETAPA, BLOCO, UNIDADE, VALOR_A_VISTA, ENTRADA })); const payload = { lotes: lotesOriginaisNoResultado, prazo_anos: prazoAnos, taxa_juros_anual: taxaJuros }; try { const response = await downloadCSV(payload); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; const filename = `precificacao_calculada_${prazoAnos}anos_${taxaJuros}juros.csv`; link.setAttribute('download', filename); document.body.appendChild(link); link.click(); link.parentNode.removeChild(link); window.URL.revokeObjectURL(url); toast.success('Download iniciado!', { id: loadingToast }); } catch (err) { toast.error("Falha ao gerar o arquivo para download.", { id: loadingToast }); } };
   const handleSelectAll = () => { const allVisibleLoteIds = filteredLotes.map(lote => lote.UNIDADE); setSelectionModel(allVisibleLoteIds); };
   const handleClearSelection = () => { setSelectionModel([]); };
