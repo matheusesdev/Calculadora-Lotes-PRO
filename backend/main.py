@@ -23,6 +23,10 @@ app = FastAPI(title="Calculadora de Lotes API")
 origins = [
     "http://localhost:3000",
     "https://precificador-ashen.vercel.app",
+    "https://calculadora-lotes-pro.vercel.app",
+    "https://calculadora-lotes-pro-git-main-matheusesdev.vercel.app",
+    "https://calculadora-lotes-pro-matheusesdev.vercel.app",
+    "https://precificador-hngraafeu-matheusesdevs-projects.vercel.app"
 ]
 
 app.add_middleware(
