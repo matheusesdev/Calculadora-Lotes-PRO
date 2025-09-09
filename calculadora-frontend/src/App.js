@@ -18,25 +18,47 @@ const formatarMoedaBRL = (valor) => { if (typeof valor !== 'number') return ""; 
 
 function App() {
   const theme = useTheme();
-  const [prazoAnos, setPrazoAnos] = useState(16);
-  const [taxaJuros, setTaxaJuros] = useState(9.5);
-  const [lotes, setLotes] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [error, setError] = useState('');
-  const [selectionModel, setSelectionModel] = useState([]);
-  const [currentTab, setCurrentTab] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [colunaAlvo, setColunaAlvo] = useState('VALOR_A_VISTA');
-  const [operacao, setOperacao] = useState('Aumentar');
-  const [tipoReajuste, setTipoReajuste] = useState('%');
-  const [valorReajuste, setValorReajuste] = useState('');
-  const [previewData, setPreviewData] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [resultadoData, setResultadoData] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [etapaFiltro, setEtapaFiltro] = useState('Todas');
-  const [blocoFiltro, setBlocoFiltro] = useState('Todas');
-  const [temColunaEntrada, setTemColunaEntrada] = useState(true);
+  const initialState = {
+    prazoAnos: 16,
+    taxaJuros: 9.5,
+    lotes: [],
+    history: [],
+    error: '',
+    selectionModel: [],
+    currentTab: 0,
+    isLoading: false,
+    colunaAlvo: 'VALOR_A_VISTA',
+    operacao: 'Aumentar',
+    tipoReajuste: '%',
+    valorReajuste: '',
+    previewData: null,
+    isModalOpen: false,
+    resultadoData: null,
+    searchTerm: '',
+    etapaFiltro: 'Todas',
+    blocoFiltro: 'Todas',
+    temColunaEntrada: true
+  };
+
+  const [prazoAnos, setPrazoAnos] = useState(initialState.prazoAnos);
+  const [taxaJuros, setTaxaJuros] = useState(initialState.taxaJuros);
+  const [lotes, setLotes] = useState(initialState.lotes);
+  const [history, setHistory] = useState(initialState.history);
+  const [error, setError] = useState(initialState.error);
+  const [selectionModel, setSelectionModel] = useState(initialState.selectionModel);
+  const [currentTab, setCurrentTab] = useState(initialState.currentTab);
+  const [isLoading, setIsLoading] = useState(initialState.isLoading);
+  const [colunaAlvo, setColunaAlvo] = useState(initialState.colunaAlvo);
+  const [operacao, setOperacao] = useState(initialState.operacao);
+  const [tipoReajuste, setTipoReajuste] = useState(initialState.tipoReajuste);
+  const [valorReajuste, setValorReajuste] = useState(initialState.valorReajuste);
+  const [previewData, setPreviewData] = useState(initialState.previewData);
+  const [isModalOpen, setIsModalOpen] = useState(initialState.isModalOpen);
+  const [resultadoData, setResultadoData] = useState(initialState.resultadoData);
+  const [searchTerm, setSearchTerm] = useState(initialState.searchTerm);
+  const [etapaFiltro, setEtapaFiltro] = useState(initialState.etapaFiltro);
+  const [blocoFiltro, setBlocoFiltro] = useState(initialState.blocoFiltro);
+  const [temColunaEntrada, setTemColunaEntrada] = useState(initialState.temColunaEntrada);
 
   const temColunaEtapa = useMemo(() => lotes.length > 0 && lotes[0]?.hasOwnProperty('ETAPA'), [lotes]);
   const etapasUnicas = useMemo(() => temColunaEtapa ? ['Todas', ...new Set(lotes.map(lote => lote.ETAPA))] : [], [lotes, temColunaEtapa]);
@@ -140,7 +162,36 @@ function App() {
               <Paper elevation={3}>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}><Tabs value={currentTab} onChange={handleTabChange} centered><Tab label="[ 1 ] Tabela & Ajustes" /><Tab label="[ 2 ] Simulação & Resultado" /></Tabs></Box>
                 {currentTab === 0 && (<Box sx={{ p: 3 }}><Stack direction={{xs: 'column', sm: 'row'}} spacing={2} sx={{ mb: 2 }}>{temColunaEtapa && (<FormControl size="small" fullWidth><InputLabel>Etapa</InputLabel><Select value={etapaFiltro} label="Etapa" onChange={(e) => setEtapaFiltro(e.target.value)}>{etapasUnicas.map(etapa => <MenuItem key={etapa} value={etapa}>{etapa}</MenuItem>)}</Select></FormControl>)}<FormControl size="small" fullWidth><InputLabel>Bloco/Quadra</InputLabel><Select value={blocoFiltro} label="Bloco/Quadra" onChange={(e) => setBlocoFiltro(e.target.value)}>{blocosUnicos.map(bloco => <MenuItem key={bloco} value={bloco}>{bloco}</MenuItem>)}</Select></FormControl><TextField label="Busca Rápida..." variant="outlined" size="small" fullWidth value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>, }}/></Stack><Typography variant="h6" sx={{ mb: 2 }}>{selectionModel.length} de {filteredLotes.length} lotes selecionados</Typography><LoteTable lotes={filteredLotes} formatarMoeda={formatarMoedaBRL} selectionModel={selectionModel} setSelectionModel={setSelectionModel} /></Box>)}
-                {currentTab === 1 && (<Box sx={{ p: 3 }}><Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}><Button variant="contained" size="large" onClick={handleCalcular} disabled={isLoading || prazoAnos <= 0 || taxaJuros < 0}>{isLoading ? <CircularProgress size={24} /> : `Calcular Simulação para ${selectionModel.length > 0 ? selectionModel.length : filteredLotes.length} Lote(s)`}</Button></Box>{resultadoData ? <Resultado resultadoData={resultadoData} onDownloadCSV={handleDownload} /> : (<Box sx={{ p: 3, textAlign: 'center', border: '1px dashed grey', borderRadius: 2 }}><Typography variant="h6">Aguardando Simulação</Typography><Typography color="text.secondary">Ajuste os parâmetros e use o botão para iniciar.</Typography></Box>)}</Box>)}
+                {currentTab === 1 && (
+  <Box sx={{ p: 3 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+      <Button 
+        variant="contained" 
+        size="large" 
+        onClick={handleCalcular} 
+        disabled={isLoading || prazoAnos <= 0 || taxaJuros < 0}
+      >
+        {isLoading ? (
+          <CircularProgress size={24} />
+        ) : (
+          `Calcular Simulação para ${selectionModel.length > 0 ? selectionModel.length : filteredLotes.length} Lote(s)`
+        )}
+      </Button>
+    </Box>
+    {isLoading ? (
+      <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+        <CircularProgress />
+      </Box>
+    ) : resultadoData ? (
+      <Resultado resultadoData={resultadoData} onDownloadCSV={handleDownload} />
+    ) : (
+      <Box sx={{ p: 3, textAlign: 'center', border: '1px dashed grey', borderRadius: 2 }}>
+        <Typography variant="h6">Aguardando Simulação</Typography>
+        <Typography color="text.secondary">Ajuste os parâmetros e use o botão para iniciar.</Typography>
+      </Box>
+    )}
+  </Box>
+)}
               </Paper>
             </Grid>
           </Grid>

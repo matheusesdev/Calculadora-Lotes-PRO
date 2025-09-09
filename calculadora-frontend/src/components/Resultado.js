@@ -7,7 +7,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 const formatarMoedaBRL = (valor) => { if (typeof valor !== 'number') return ""; return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 
 const Resultado = ({ resultadoData, onDownloadCSV }) => {
-  if (!resultadoData || resultadoData.length === 0) {
+  if (!resultadoData || !Array.isArray(resultadoData) || resultadoData.length === 0) {
+    console.log('Dados inválidos ou vazios:', resultadoData);
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
         <Typography variant="h5">Nenhum resultado para exibir</Typography>
@@ -48,6 +49,19 @@ const Resultado = ({ resultadoData, onDownloadCSV }) => {
       <Button variant="contained" color="success" startIcon={<DownloadIcon />} onClick={onDownloadCSV} sx={{ mb: 2 }}>Baixar Tabela Final em CSV</Button>
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
+          rows={resultadoData.map((row, index) => ({ ...row, id: row.UNIDADE || index }))}
+          columns={columns}
+          pageSize={10}
+          rowsPerPageOptions={[10]}
+          disableSelectionOnClick
+          loading={!resultadoData}
+          sx={{
+            '& .MuiDataGrid-cell': {
+              whiteSpace: 'normal',
+              lineHeight: 'normal',
+              padding: '8px'
+            }
+          }}
           rows={resultadoData}
           columns={columns}
           getRowId={(row) => row.UNIDADE}
